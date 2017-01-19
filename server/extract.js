@@ -8,15 +8,15 @@ var _ = require('lodash')
 var numberOfFiles
 var finished
 
-var readDictionaries = function(dailyset) {
+var readDictionaries = function(dailyset, hosts, dictsdir, storedir) {
   var dictionaries = []
-  var folder = Meteor.settings.dictsdir + '/json/'
-  var client = index.ESClient()
+  var folder = dictsdir + '/json/'
+  var client = index.ESClient(hosts)
   console.log("starting extraction")
   recursive(folder, function(err, files) {
     numberOfFiles = files.length
     finished = _.after(numberOfFiles, () => {
-      fs.unlink(Meteor.settings.storedir + '/elasticsearch.lock', (err) => {
+      fs.unlink(storedir + '/elasticsearch.lock', (err) => {
         if (err) throw err
         console.log('all extractions finished')
       })

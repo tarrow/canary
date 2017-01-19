@@ -65,19 +65,19 @@ API.addRoute('store', {
 });
 API.addRoute('dump', {
 	get: function () {
-		index.dump()
+		index.dump(Meteor.settings.elastichosts, Meteor.settings.userdir)
 		return {}
 	}
 })
 API.addRoute('facts', {
 	delete: function() {
-		index.deleteAndMapFactIndex()
+		index.deleteAndMapFactIndex(undefined, Meteor.settings.elastichosts)
 		return {}
 	}
 })
 API.addRoute('metadata', {
 	delete: function() {
-		index.deleteAndMapMetadataIndex()
+		index.deleteAndMapMetadataIndex(undefined, Meteor.settings.elastichosts)
 		return {}
 	}
 })

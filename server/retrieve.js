@@ -6,47 +6,11 @@ import * as child_process from 'child_process';
 import fs from 'fs'
 var mark = require('./markscommon.js')
 
-// =====================================================================================
-// FUNCTIONS TO CHECK AND RETRIEVE URLS AND READ FROM GETPAPERS / QUICKSCRAPE / THRESHER OUTPUT
-var retrieve = function(url, dailyset) {
-	var sd = Meteor.settings.storedir + '/' + dailyset + '/' + mark.uid(url);
-	if(!fs.existsSync(sd)) {
-		fs.mkdirSync(sd);
-	}
-	console.log('preparing to retrieve ' + url + ' to ' + sd);
-	var urlexists = acheck200(url);
-	if ( urlexists  && Meteor.settings.downloadPapers ) {
-		athresh(sd, url); // if quickscrape/thresher is throwing lots of errors, wrap this in a try/catch
-		// if fulltext.html not retrieved, try to get the url directly
-		if ( !fs.existsSync(sd + '/fulltext.html')) {
-			console.log('no fulltext.html present so retrieving directly');
-			// TODO add code here that would look in the source URL for links that may go to the fulltext
-			// because often the source URL is a splash page. Also grab any cookies presented by the source URL
-			// Code in CL API to do this - just copy it over.
-			Meteor.http.call('GET', url, function(sth,res) {
-				// save the file to the url folder
-				var nm = url.split('/')[-1];
-				var fnm = sd + '/' + 'fulltext.html';
-				fs.writeFileSync(fnm, res);
-				console.log('file ' + nm + ' retrieved directly and saved to set');
-				// TODO if there is no fulltext.html but there is some other html, copy it to fulltext.html
-				// TODO if there is now a fulltext.html, extract the text of it out into a file called fulltext.txt
-				// TODO if there is no html but there is a pdf or an xml, keep originals but also convert it to text into a file called fulltext.txt
-			});
-		} else {
-			// TODO extract fulltext.html out to fulltext.txt
-		}
-		return true;
-	} else {
-		return true;
-	}
-}
-
-var getPapers = function(searchstr, dailyset) {
+var getPapers = function(searchstr, dailyset, storedir) {
 	// TODO update this to call the latest version of getpapers, and to call it with the query
 	// for whichever sources we want URLs for. IF POSSIBLE, have getpapers return the result URLs
 	// directly instead of having to read them from disk
-	var sd = Meteor.settings.storedir + '/' + dailyset;
+	var sd = storedir + '/' + dailyset;
 	console.log('running getpapers for query ' + searchstr);
 	var api = 'eupmc'; // should be crossref, and maybe also eupmc if desirable
 	var cmd = "getpapers --query '" + searchstr + "' -x --outdir '" + sd + "'"; // + ' --all';
@@ -115,29 +79,6 @@ var check200 = function(url, callback) {
 	});
 };
 var acheck200 = Async.wrap(check200);
-
-// various processing functions called by the meteor methods during processing
-var thresh = function(sd, url, callback) {
-	process.chdir(sd);
-	// try to quickscrape / thresher the urls
-	var scrapers = new thresher.ScraperBox(Meteor.settings.scraperdir);
-	var t = new thresher.Thresher(scrapers);
-	t.once('result', function(result, structured) {
-		// no longer need to read the metadata from thresher output, we will already have it from the API
-		/*var boutfile = 'bib.json';
-		var bib = format(structured);
-		var pretty = JSON.stringify(bib, undefined, 2);
-		fs.writeFileSync(boutfile, pretty);
-		var routfile = 'results.json';
-		fs.writeFileSync(routfile, JSON.stringify(structured,undefined,2));*/
-		t.removeAllListeners();
-		t = null;
-		callback(null,true);
-  });
-	// TODO what and how to return on failure of getting a result? Should return false
-	t.scrape(url, true);
-};
-var athresh = Async.wrap(thresh);
 
 
 // the bibjson formatting function
@@ -291,4 +232,3 @@ var format = function(t) {
 };
 
 module.exports.getpapers = getPapers
-module.exports.retrieve = retrieve

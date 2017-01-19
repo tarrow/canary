@@ -2,7 +2,7 @@
   "runcron": false,
   "normalise": false,
   "indexurl": "http://localhost:9200",
-  "elastichost": "localhost",
+  "elastichosts": ["localhost:9200"],
   "elasticport": "9200",
   "userdir": "/home/tom/src/contentmine/canaryvm",
   "storedir": "/home/tom/src/contentmine/canaryvm/store",
